@@ -1,8 +1,9 @@
 # `clj-re` - clojure style regular expression functions
 
-This package wraps cl-ccpre's regexp handling, which is nearly identical to
+This package wraps cl-ppcre's regexp handling, which is nearly identical to
 [java.util.regex.Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html)
-which in turn is used by Clojure in a series of regexp supporting functions.
+which in turn is used by Clojure, in a series of regexp supporting functions that attempt to 
+behave like their Clojure namesakes.
 
 It provides the following functions:
 
@@ -68,7 +69,7 @@ goes a long way to making it more readable. Perhaps someday we'll have something
 
 ### Named capturing groups (a.k.a. registers) are not supported.
 
-Clojure/java has them, cl-ccpre has them, this was purely laziness on my part since 
+Clojure/java has them, cl-ppcre has them, this was purely laziness on my part since 
 I never use them.
 
 ## Usage
