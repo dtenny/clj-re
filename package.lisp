@@ -4,6 +4,7 @@
   (:use :cl :cl-ppcre)
   (:documentation "Functions that implement Clojure style regexp operations.")
   (:export
+   ;; Functions taking regular expressions
    #:re-find
    #:re-groups
    #:re-matcher
@@ -14,6 +15,10 @@
    #:re-replace-first                   ;ala clojure.string/replace-first
    #:re-seq
    #:re-split                           ;ala clojure.string/split
+
+   ;; Optional readtable support
+   #:readtable
+   #:readtable-mixin
    ))
 
 

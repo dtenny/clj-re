@@ -1,0 +1,33 @@
+v0.1.0 Initial Release
+
+    Lacks Clojure pattern literal syntax, so all functions take patterns
+    expressed as strings, which means that the usual double escapes are
+    required. E.g. the regular expression '\d' must be expressed as '\\d'.
+
+v1.0.1 Second Release.  Compiled pattern syntax/support.
+
+    Introduces the notion of "pattern", where a cl-ppcre compiled scanner
+    is used as an equivalent to Clojure's java.util.regex.Pattern.  Also
+    adds named-readtable support for pattern literals, e.g. #"ab*c".
+
+    All functions which previously required strings where a Pattern would
+    be called for in Clojure now accept a compiled cl-ppcre scanner which
+    we will call a pattern. Note that a cl-ppcre compiled scanner is
+    actually a function, for which a deftype was added for 'pattern'.
+
+    In order not to break all the calls for any users of v0.1.0 (of which
+    there were probably zero, but whatever), we still allow string
+    expressions of patterns where clojure would require patterns, but you
+    can now use the pattern literal syntax and/or (re-pattern "string
+    literal") to pass a 'pattern' object (really a cl-ppcre scanner).
+    
+    ONE BREAKING CHANGE:
+
+    There is one backwards-incompatible change in v1.0.1 (which is why
+    the major version is bumped), namely, the `re-replace` and
+    `re-replace-first` functions, now treat strings passed as 'match'
+    arguments literally. They are no longer interpreted as strings
+    expressing regex patterns.  You must pass a pattern object if you want
+    match to be used for regex matching.  This change was made for
+    compatability with clojure.
+     

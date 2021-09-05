@@ -6,10 +6,11 @@
 (in-package :clj-re-asd)
 
 (defsystem :clj-re
-  :version "0.1.0"
+  :version "1.0.1"
   :license "MIT"
   :author "Dave Tenny"
   :description "Implements Clojure-styled regexp operations such as `re-matches` and `re-find`."
-  :depends-on (:cl-ppcre)
+  :depends-on (:cl-ppcre :named-readtables)
+  :serial t
   :components ((:file "package")
                (:file "clj-re")))
