@@ -36,26 +36,39 @@ Following are the clojure.string functions and what we have called them here:
 We could have left `replace-first` alone, but with every other exported symbol
 in this package prefixed with 're', it seemed like the consistent thing to do.
 
-### No provision for `#"pattern"` regular expression literals.
+### Optional support for clojure pattern literal syntax, i.e. #"pattern"
 
-Clojure supports a 'regular expression literal' syntax of the form
-`#"pattern"` - note the sharpsign. We could have added a `#""` readtable
-syntax here, but it would conflict with the syntax used for C-style literals
-in the [trivial-escapes](https://github.com/williamyaoh/trivial-escapes/)
-package. Also, `#""` isn't technically a standards-compliant dispatch sequence.
+Using `:named-readtables`
+[http://melisgl.github.io/named-readtables](http://melisgl.github.io/named-readtables),
+the `:clj-re` pacakge exports `readtable` and `readtable-mixin` readtables
+that will return compiled cl-ppcre patterns when the pattern literal syntax is
+used.
 
-Similarly, the `#p` readtable entry is customarily used for pathnames ('p'
-might have been nice for 'patterns'), and `#r` is used for lisp radix
-specifications ('r' might have been nice for 'regex'). These are also are not
-spec-compliant for user-defined readtable entries.
+In order to make the literal use optional, where clojure functions would require a Pattern
+object, you are free to use a string expressing a pattern, which will in turn be fed to
+`re-pattern` to obtain a pattern.  This is hopefully a superset-compatible feature
+compare to clojure, but if you wanted clojure's exceptions on invalid arguments or types
+you won't get them here.
 
-The regular expression literal syntax (if you have it) means you do not need
-to double-escape regular expression constructs such as `\d`.  So for now
-you're stuck having to double-escape such constructs, i.e. `\\d`.
+You can enable pattern literal syntax either by:
 
-It is _really useful_ to have the additional notation because double-escaping
-regex constructs gets old really fast. Just remember `princ` is your friend for
-debugging escape-related pitfalls.
+    (named-readtables:in-readtable clj-re:readtable)
+
+which augments the standard readtable with a dispatch function for `#""`
+literals, or by using named readtable composition capabilities (e.g. merge or
+fuse) with `clj-re:readtable-mixin`, which contains only the dispatch function
+for pattern literals, without any other reader macros.
+
+The literal syntax makes it easier to ensure you have compiled cl-ppcre scanners
+when the code is compiled and/or loaded, roughly the equivalent of 
+`#.(re-pattern "pattern string")`.
+
+The literal syntax also means you don't need to double-escape regular
+expression constructs such as `\d`, which must be expressed as `\\d` on a conventional
+Common Lisp string.
+
+TIP: If you're not using pattern literals, 
+remember `princ` is your friend for debugging escape-related pitfalls.
 
 For example, which regexp matches `"\\\\"` with `\{n}` notation?
 
@@ -65,7 +78,7 @@ For example, which regexp matches `"\\\\"` with `\{n}` notation?
 
 Princ makes it clearer. The answer is the second, but once you get a big old string full of
 `\\\\` sequences readability goes into the toilet. Clojure's regular expression literal
-goes a long way to making it more readable. Perhaps someday we'll have something.
+goes a long way to making regular expressions more readable.
 
 ### Named capturing groups (a.k.a. registers) are not supported.
 

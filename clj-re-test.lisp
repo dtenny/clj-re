@@ -6,32 +6,43 @@
   (:documentation "Tests for the :clj-re package."))
 
 (in-package :clj-re-test)
+(named-readtables:in-readtable readtable)
 
 (def-suite test-suite :description ":clj-re tests")
 (in-suite test-suite)
 
 (test re-find                                 ;and implicitly, re-matcher, re-groups
+  (is (equalp "aaab" (re-find #"a*b" "aaab"))) ;no registers, this is how clojure works :-/
   (is (equalp "aaab" (re-find "a*b" "aaab"))) ;no registers, this is how clojure works :-/
-  (is (equalp "aaab" (re-find "a*b" "aaabc")))
-  (is (equalp "aaab" (re-find "a*b" "caaabc")))
+  (is (equalp "aaab" (re-find #"a*b" "aaabc")))
+  (is (equalp "aaab" (re-find #"a*b" "caaabc")))
+  (is (equalp '("aaab" "b") (re-find #"a*(b)" "aaab")))
   (is (equalp '("aaab" "b") (re-find "a*(b)" "aaab")))
-  (is (equalp '("aaab" "b") (re-find "a*(b)" "caaabc")))
-  (is (equalp '("aaab" "b") (re-find (re-matcher "a*(b)" "aaab"))))
-  (let ((m (re-matcher "a*(b)" "aabcaaab")))
+  (is (equalp '("aaab" "b") (re-find #"a*(b)" "caaabc")))
+  (is (equalp '("aaab" "b") (re-find (re-matcher #"a*(b)" "aaab"))))
+  (let ((m (re-matcher #"a*(b)" "aabcaaab")))
     (is (equalp '("aab" "b") (re-find m)))
     (is (equalp '("aaab" "b") (re-find m)))
-    (is (null (re-find m))))) 
+    (is (null (re-find m)))))
 
 (test re-matches                        ;match full input, vs re-find's "find anywhere in input"
+  (is (equal "aaab" (re-matches #"a*b" "aaab")))
   (is (equal "aaab" (re-matches "a*b" "aaab")))
-  (is (null (re-matches "a*b" "aaabc")))
-  (is (null (re-matches "a*b" "aaabcd")))
-  (is (null (re-matches "a*b" "baaab")))
+  (is (null (re-matches #"a*b" "aaabc")))
+  (is (null (re-matches #"a*b" "aaabcd")))
+  (is (null (re-matches #"a*b" "baaab")))
+  (is (equal '("aaab" "b") (re-matches #"a*(b)" "aaab")))
   (is (equal '("aaab" "b") (re-matches "a*(b)" "aaab"))))
 
 (test re-pattern
-  (let ((s "ab*c"))
-    (is (eq s (re-pattern s)))))
+  (let* ((s "ab*c")
+         (p (re-pattern s))
+         (p2 (re-pattern p)))
+    (is (typep p 'clj-re::pattern))
+    (is (eq p p2))
+    (is (equalp "abbbc" (re-matches p "abbbc")))
+    ;; Testing re-pattern takes patterns as input
+    (is (equalp "abbbc" (re-matches (re-pattern p) "abbbc")))))
 
 (test re-quote-replacement
   (is (string= "\\$1" (re-quote-replacement "$1")))
@@ -56,16 +67,28 @@
   ;; Many of these are adapted examples from https://clojuredocs.org/clojure.string/replace
   ;; (with double-escapes where necessary and string vs regex literal syntax).
   (is (string= "The color is blue" (re-replace "The color is red" "red" "blue")))
-  (is (string= "lmostAay igPay atinLay"
+  (is (string= "The color is blue" (re-replace "The color is red" #"red" "blue")))
+  ;; This won't match, because strings are to be taken literally.
+  (is (string= "Almost Pig Latin"
                (re-replace "Almost Pig Latin" "\\b(\\w)(\\w+)\\b" "$2$1ay"))) 
+  ;; This will match, but replacement isn't interpreted unless match is a pattern
+  (is (string= "Almost $2$1ayig Latin"
+               (re-replace "Almost Pig Latin" "P" "$2$1ay"))) 
+  ;; This will match with register replacement 
+  (is (string= "lmostAay igPay atinLay"
+               (re-replace "Almost Pig Latin" #"\b(\w)(\w+)\b" "$2$1ay"))) 
+  ;; This will not match because match is a string. Note that clojure would issue an error here
+  ;; for unknown escape directives.
+  (is (string= "Almost Pig Latin"
+               (re-replace "Almost Pig Latin" "\b(\w)(\w+)\b" "$2$1ay"))) 
   ;; No registers, with functional replacement
   (is (string= "Thee cooloor iis reed."
-               (re-replace "The color is red." "[aeiou]" 
+               (re-replace "The color is red." #"[aeiou]" 
                            (lambda (match)
                              (concatenate 'string match match)))))
   ;; With registers and functional replacement
   (is (string= "Thee cooloor iis reed."
-               (re-replace "The color is red." "([aeiou])" 
+               (re-replace "The color is red." #"([aeiou])" 
                            (lambda (match-with-regs)
                              (is (string= (first match-with-regs) (second match-with-regs)))
                              (concatenate 'string 
@@ -73,19 +96,23 @@
                                           (first match-with-regs))))))
 
   (is (string= "fabulous ddero oo doo"
-               (re-replace "fabulous fodder foo food" "f(o+)(\\S+)" "$2$1")))
+               (re-replace "fabulous fodder foo food" (re-pattern "f(o+)(\\S+)") "$2$1")))
+  (is (string= "fabulous ddero oo doo"
+               (re-replace "fabulous fodder foo food" #"f(o+)(\S+)" "$2$1")))
   (is (string= "fabulous $2$1 $2$1 $2$1"
-               (re-replace "fabulous fodder foo food" "f(o+)(\\S+)" "\\$2\\$1")))
+               (re-replace "fabulous fodder foo food" (re-pattern "f(o+)(\\S+)") "\\$2\\$1")))
   (is (string= "fabulous $2$1 $2$1 $2$1"
-               (re-replace "fabulous fodder foo food" "f(o+)(\\S+)" 
+               (re-replace "fabulous fodder foo food" #"f(o+)(\S+)" "\\$2\\$1")))
+  (is (string= "fabulous $2$1 $2$1 $2$1"
+               (re-replace "fabulous fodder foo food" #"f(o+)(\S+)" 
                            (re-quote-replacement "$2$1"))))
   (is (string= "1 2 1" 
-               (re-replace "a b a" "a|b" 
+               (re-replace "a b a" #"a|b" 
                            ;; In Clojure the 'function' was {"a" "1" "b" "2"}
                            (lambda (match)
                              (cdr (assoc match '(("a" . "1") ("b" . "2")) :test #'string=))))))
   (is (string= "Hello World"
-               (re-replace "hello world" "\\b." #'string-upcase)))
+               (re-replace "hello world" (re-pattern "\\b.") #'string-upcase)))
 
   ;; Character operands
   (is (string= "aaaa" (re-replace "abba" #\b #\a)))
@@ -97,21 +124,25 @@
 (test re-replace-first
   (is (string= "A good night to you, sir.  Good day."
                (re-replace-first "A good day to you, sir.  Good day." "day" "night")))
+  (is (string= "A good night to you, sir.  Good day."
+               (re-replace-first "A good day to you, sir.  Good day." #"day" "night")))
   (is (string= "A good day to you, sir."
                (re-replace-first "A good day to you, sir." "madam" "master")))
   (is (string= "night need not be SHOUTED."
-               (re-replace-first "Day need not be SHOUTED." "(?i)day" "night")))
-  (is (string= "name" (re-replace-first "/path/to/file/name" "^.*/" "")))
+               (re-replace-first "Day need not be SHOUTED." #"(?i)day" "night")))
+  (is (string= "name" (re-replace-first "/path/to/file/name" #"^.*/" "")))
   (is (string= "path/to/file/name"
-               (re-replace-first "/path/to/file/name" "^.*?/" "")))
+               (re-replace-first "/path/to/file/name" #"^.*?/" "")))
   (is (string= "fabulous ddero foo food"
-               (re-replace-first "fabulous fodder foo food" "f(o+)(\\S+)" "$2$1")))
+               (re-replace-first "fabulous fodder foo food" #"f(o+)(\S+)" "$2$1")))
   (is (string= "fabulous $2$1 foo food"
-               (re-replace-first "fabulous fodder foo food" "f(o+)(\\S+)" "\\$2\\$1"))))
+               (re-replace-first "fabulous fodder foo food" #"f(o+)(\S+)" "\\$2\\$1"))))
 
 (test re-seq
   (is (equalp '("1" "1" "0")
                (re-seq "\\d" "clojure 1.1.0")))
+  (is (equalp '("1" "1" "0")
+               (re-seq #"\d" "clojure 1.1.0")))
   (is (equalp '("mary" "had" "a" "little" "lamb")
               (re-seq "\\w+" "mary had a little lamb")))
   (is (equalp '(("pkts:18" "pkts" "18") ("err:5" "err" "5") ("drop:48" "drop" "48"))
@@ -122,8 +153,12 @@
 (test re-split
   (is (equalp '("Clojure" "is" "awesome!")
               (re-split "Clojure is awesome!" " ")))
+  (is (equalp '("Clojure" "is" "awesome!")
+              (re-split "Clojure is awesome!" #" ")))
   (is (equalp '("q" "w" "e" "r" "t" "y" "u" "i" "o" "p")
               (re-split "q1w2e3r4t5y6u7i8o9p0" "\\d+")))
+  (is (equalp '("q" "w" "e" "r" "t" "y" "u" "i" "o" "p")
+              (re-split "q1w2e3r4t5y6u7i8o9p0" #"\d+")))
   (is (equalp '("q" "w" "e" "r" "t5y6u7i8o9p0")
               (re-split "q1w2e3r4t5y6u7i8o9p0" "\\d+" 5)))
   (is (equalp '(" " "q" "1" "w" "2" " ")
@@ -161,6 +196,8 @@
   ;; Empty strings at the end are omitted.
   (is (equalp '("root" "" "0" "0" "admin")
               (re-split "root::0:0:admin::" ":")))
+  (is (equalp '("root" "" "0" "0" "admin")
+              (re-split "root::0:0:admin::" #":")))
 
   ;; A negative limit will return trailing empty strings.
   (is (equalp '("root" "" "0" "0" "admin" "" "")
