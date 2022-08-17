@@ -167,7 +167,7 @@
 (defun re-pattern (s)
   "In Clojure: Returns an instance of java.util.regex.Pattern, for use, e.g. in re-matcher.
   In Common Lisp: returns a compiled pattern (cl-ppcre scanner).
-  Note that clojure (and this module) allow 's' can to be a pattern as well as a string
+  Note that clojure (and this module) allow 's' to be a pattern as well as a string
   expressing a pattern."
   (if (stringp s)
       (create-scanner s)
