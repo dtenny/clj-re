@@ -6,7 +6,7 @@
 (in-package :clj-re-asd)
 
 (defsystem :clj-re
-  :version "1.0.1"
+  :version "1.0.2"
   :license "MIT"
   :author "Dave Tenny"
   :description "Implements Clojure-styled regexp operations such as `re-matches` and `re-find`."

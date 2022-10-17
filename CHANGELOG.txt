@@ -31,3 +31,5 @@ v1.0.1 Second Release.  Compiled pattern syntax/support.
     match to be used for regex matching.  This change was made for
     compatability with clojure.
      
+V1.0.2 Fix to bug in re-groups for null match registers.
+    
