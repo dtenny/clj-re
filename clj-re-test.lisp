@@ -23,7 +23,12 @@
   (let ((m (re-matcher #"a*(b)" "aabcaaab")))
     (is (equalp '("aab" "b") (re-find m)))
     (is (equalp '("aaab" "b") (re-find m)))
-    (is (null (re-find m)))))
+    (is (null (re-find m))))
+  ;; Empty register groups. 
+  (let ((m (re-matcher "(sd)?([OBAFGKMLY])([0-9])(?:.[0-9])?([IVab]+)" "G2V")))
+    (is (equalp '("G2V" NIL "G" "2" "V") (re-find m)))
+    (is (null (re-find m))))
+  )
 
 (test re-matches                        ;match full input, vs re-find's "find anywhere in input"
   (is (equal "aaab" (re-matches #"a*b" "aaab")))

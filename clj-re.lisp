@@ -62,8 +62,9 @@
   (done? nil)                           ;T if last call to scanner returned nil
   (match-start 0 :type integer)
   (match-end 0 :type integer)
-  (reg-starts #() :type (array integer))
-  (reg-ends #() :type (array integer)))
+  ;; Entries for a register returned by scan may be nil if the register didn't match
+  (reg-starts #() :type (array (or null integer)))
+  (reg-ends #() :type (array (or null integer))))
 
 (defun next (matcher)
   "Find the next match, return nil if there aren't any T if there are, in which case
@@ -94,7 +95,7 @@
               (whole (subseq source (matcher-match-start matcher) (matcher-match-end matcher)))
               (regs (loop for s across (matcher-reg-starts matcher)
                           for e across (matcher-reg-ends matcher)
-                          collecting (subseq source s e))))
+                          collecting (and s (subseq source s e)))))
          (if (= 0 (length regs))
              whole
              (concatenate 'list (list whole) regs)))))
