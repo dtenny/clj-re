@@ -85,6 +85,20 @@ goes a long way to making regular expressions more readable.
 Clojure/java has them, cl-ppcre has them, this was purely laziness on my part since 
 I never use them.
 
+## Strings as patterns gotchas
+
+If you eschew use of the read-table for #"..." pattern syntax, many of the
+functions here will happily take a string containing a regexp and convert
+it to a pattern representation to make your life easier so you don't
+constantly have to call `re-pattern`.
+
+The replacements for `clojure.string/replace-first` and `replace` are
+different though, because string 'match' parameters are treated literally.
+They are treated that way here too, so in that regard clojure and this lisp
+library match.  But you can get so into the mindset of "strings can express
+patterns" that it's easy to forget that `replace-first` and `replace`
+won't take the strings as patterns (and that this is the intended behavior).
+
 ## Usage
 
     (ql:quickload :clj-re)

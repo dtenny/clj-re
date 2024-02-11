@@ -136,6 +136,9 @@
   (is (string= "night need not be SHOUTED."
                (re-replace-first "Day need not be SHOUTED." #"(?i)day" "night")))
   (is (string= "name" (re-replace-first "/path/to/file/name" #"^.*/" "")))
+  (is (string= "name" (re-replace-first "/path/to/file/name" (re-pattern "^.*/") "")))
+  (is (string= "/path/to/file/name" ;'match' is not a pattern
+               (re-replace-first "/path/to/file/name" "^.*/" "")))
   (is (string= "path/to/file/name"
                (re-replace-first "/path/to/file/name" #"^.*?/" "")))
   (is (string= "fabulous ddero foo food"

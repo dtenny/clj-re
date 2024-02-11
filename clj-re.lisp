@@ -318,7 +318,8 @@
 
   The `replacement` is literal (i.e. none of its characters are treated
   specially) for all cases above except pattern / string.
-  NOTE: This behavior is different from most regexp functions in this package that 
+
+  CAUTION: This behavior is different from most regexp functions in this package that 
   interpret strings as patterns. A string as the 'match' argument is treated literally and 
   not as an expression of a pattern. This is for conformance with clojure's behavior.
 
@@ -337,7 +338,12 @@
   "In clojure this would be `clojure.string/replace-first`.
 
   Replaces the _first_ instance of 'match' with 'replacement' in 'string'.
-  See `re-replace` for argument syntax and semantics."
+  See `re-replace` for argument syntax and semantics.
+
+  CAUTION: unlike many of the re-* functions, this function will take a string
+  `match` argument as a literal text match, not a pattern.
+  Be sure to pass a pattern if you want pattern matching, as with 
+  `(re-pattern <string>)`."
   (declare (type string string))
   (re-replace-aux string match replacement #'regex-replace))
 
